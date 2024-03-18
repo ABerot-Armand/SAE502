@@ -1,0 +1,29 @@
+# Définition des chemins source et de destination
+$src1 = "\\ServMainAKAT\PERSO"
+$src2 = "\\ServMainAKAT\EQUIPES"
+$src3 = "\\ServMainAKAT\BDD-Script"
+$dst = "C:\BACKUPS"
+
+# Boucle infinie pour effectuer des sauvegardes à intervalles réguliers
+while ($true) {
+    # Obtenez la date et l'heure actuelles au format "yyyyMMdd-HHmm"
+    $time = (Get-Date).ToString("yyyyMMdd-HHmm")
+    
+    # Créez un répertoire de sauvegarde avec le nom basé sur la date/heure actuelle
+    $backup_path = "$dst\$time"
+    New-Item -ItemType Directory -Path $backup_path
+
+    # Copiez les dossiers sources dans le répertoire de sauvegarde en utilisant Robocopy
+    Robocopy "$src1" "$backup_path\PERSO" /E /MIR
+    Robocopy "$src2" "$backup_path\EQUIPES" /E /MIR
+    Robocopy "$src3" "$backup_path\BDD-Script" /E /MIR
+
+    # Calculez la date limite pour la suppression des sauvegardes (7 jours en arrière)
+    $delete_before = (Get-Date).AddDays(-7)
+
+    # Supprimez les dossiers de sauvegarde datant de plus de 7 jours de manière récursive
+    Get-ChildItem $dst | Where-Object {$_.LastWriteTime -lt $delete_before} | Remove-Item -Recurse
+
+    # Attendez pendant 3600 secondes (1 heure) avant de lancer la sauvegarde suivante
+    Start-Sleep -Seconds 3600
+}
